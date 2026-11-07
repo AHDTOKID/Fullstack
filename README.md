@@ -96,6 +96,27 @@ npm run build
 
 ---
 
+## Deploying to Vercel
+
+The project is pre-configured for 1-click Vercel deployment as a unified monorepo or as individual services.
+
+### 1. In the Vercel Dashboard:
+1. Select **Root Directory**: `./` (or leave as default).
+2. For **Application Preset**, select **Other** (or use the detected **Services**).
+3. Under **Environment Variables**, add:
+   - `MONGO_URI`: Your MongoDB Atlas connection URI (`mongodb+srv://...`)
+   - `JWT_SECRET`: A secure key (e.g., `academic_portal_secret_key_2026`)
+   - `NODE_ENV`: `production`
+4. Click **Deploy**!
+
+Vercel will automatically:
+- Run `npm run build` to build the React application into `frontend/build`.
+- Deploy the Express API as a serverless function via `api/index.js`.
+- Route `/api/*` requests to the backend serverless handler.
+- Route all frontend paths to `/index.html` for clean React Router client-side navigation.
+
+---
+
 ## Core Features & Fixes
 
 1. **Per-Student & Per-Class Distinct Timetables**:

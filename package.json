@@ -3,7 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node backend/server.js"
+    "build": "cd frontend && npm install && npm run build",
+    "start": "node backend/server.js",
+    "server": "cd backend && npm start",
+    "client": "cd frontend && npm start",
+    "test": "cd backend && node test-system.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.2.0",
+    "mongoose": "^8.0.3",
+    "morgan": "^1.10.0"
   },
   "browserslist": [
     ">0.2%",
