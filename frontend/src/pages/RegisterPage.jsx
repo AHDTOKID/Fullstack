@@ -1,8 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../api/client';
+import { useAuth } from '../hooks/useAuth';
+
+const CLASSES = [
+  'Grade 10 - Section A',
+  'Grade 10 - Section B',
+  'Grade 11 - Section A',
+  'Grade 11 - Section B',
+  'Grade 12 - Section A',
+];
 
 export default function RegisterPage() {
+  const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
@@ -10,6 +19,8 @@ export default function RegisterPage() {
     password: '',
     role: 'student',
     title: '',
+    studentClass: CLASSES[0],
+    rollNumber: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,9 +32,8 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/register', form);
-      localStorage.setItem('token', data.token);
-      navigate('/feedback');
+      await register(form);
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     }
@@ -31,11 +41,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center p-6 py-12">
       <div className="w-full max-w-md">
         {/* Branding */}
-        <div className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-container mb-4">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary-container mb-3 shadow-md">
             <span
               className="material-symbols-outlined text-white text-3xl"
               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -48,15 +58,15 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-10 shadow-[0_20px_40px_rgba(13,28,47,0.06)]">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-primary font-headline">Create Account</h1>
-            <p className="text-secondary text-sm mt-2">Join the academic portal today.</p>
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_20px_40px_rgba(13,28,47,0.06)] border border-surface-container-low">
+          <div className="mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-primary font-headline">Create Account</h1>
+            <p className="text-secondary text-sm mt-1.5">Join the academic portal today.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
                 Full Name
               </label>
               <input
@@ -64,13 +74,13 @@ export default function RegisterPage() {
                 value={form.name}
                 onChange={set('name')}
                 className="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container"
-                placeholder="Dr. Jane Smith"
+                placeholder="e.g. Alex Thompson"
                 required
               />
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
                 Email Address
               </label>
               <input
@@ -78,13 +88,13 @@ export default function RegisterPage() {
                 value={form.email}
                 onChange={set('email')}
                 className="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container"
-                placeholder="you@university.edu"
+                placeholder="you@school.edu"
                 required
               />
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
                 Password
               </label>
               <input
@@ -98,20 +108,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-2">
-                Title / Role Description
-              </label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={set('title')}
-                className="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container"
-                placeholder="e.g. Studio IV Lead (optional)"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-2">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
                 Account Role
               </label>
               <div className="relative">
@@ -130,14 +127,71 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {form.role === 'student' && (
+              <>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
+                    Assigned Class / Grade
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={form.studentClass}
+                      onChange={set('studentClass')}
+                      className="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 appearance-none text-sm focus:ring-2 focus:ring-primary-container"
+                    >
+                      {CLASSES.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary">
+                      expand_more
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-secondary mt-1">
+                    Your timetable and course schedule will automatically match this class.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
+                    Roll Number (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.rollNumber}
+                    onChange={set('rollNumber')}
+                    className="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container"
+                    placeholder="e.g. 012"
+                  />
+                </div>
+              </>
+            )}
+
+            {form.role !== 'student' && (
+              <div>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-secondary block mb-1.5">
+                  Academic Title / Department
+                </label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={set('title')}
+                  className="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary-container"
+                  placeholder="e.g. Studio IV Lead / Physics Department"
+                />
+              </div>
+            )}
+
             {error && (
-              <p className="text-error text-sm bg-error-container px-4 py-2 rounded-xl">{error}</p>
+              <p className="text-error text-sm bg-error-container px-4 py-2.5 rounded-xl">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold hover:opacity-90 transition-all mt-2 disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold hover:opacity-90 transition-all mt-2 disabled:opacity-60 flex items-center justify-center gap-2 shadow-md cursor-pointer"
             >
               {loading ? 'Creating Account…' : 'Create Account'}
               {!loading && <span className="material-symbols-outlined text-[20px]">person_add</span>}

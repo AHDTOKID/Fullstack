@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
     return res.status(422).json({ success: false, errors: errors.array() });
   }
 
-  const { name, email, password, role, title } = req.body;
+  const { name, email, password, role, title, studentClass, rollNumber } = req.body;
 
   const existing = await User.findOne({ email });
   if (existing) {
@@ -22,12 +22,27 @@ exports.register = async (req, res) => {
   // Generate initials from name
   const initials = name
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
 
-  const user = await User.create({ name, email, password, role, title, initials });
+  // Auto-generate student ID if student
+  const resolvedRole = role || 'student';
+  const assignedStudentId = req.body.studentId || (resolvedRole === 'student' ? `#ST-${Math.floor(1000 + Math.random() * 9000)}` : '');
+
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role: resolvedRole,
+    title,
+    initials,
+    studentClass: studentClass || (resolvedRole === 'student' ? 'Grade 10 - Section A' : ''),
+    studentId: assignedStudentId,
+    rollNumber: rollNumber || '',
+  });
   const token = signToken(user._id);
 
   res.status(201).json({ success: true, token, user });

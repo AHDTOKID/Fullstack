@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema(
     title: { type: String, default: '' },           // e.g. "Studio IV Lead"
     avatarUrl: { type: String, default: '' },
     initials: { type: String, default: '' },        // fallback when no avatar
+    studentClass: { type: String, default: 'Grade 10 - Section A' },
+    studentId: { type: String, default: '' },       // e.g. "#AT-9920"
+    rollNumber: { type: String, default: '' },      // e.g. "001"
+    department: { type: String, default: 'General' },
+    phone: { type: String, default: '' },
   },
   { timestamps: true }
 );

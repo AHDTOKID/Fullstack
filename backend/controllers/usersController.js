@@ -15,7 +15,7 @@ exports.getOne = async (req, res) => {
 
 // PUT /api/users/me  – update own profile
 exports.updateMe = async (req, res) => {
-  const { name, title, avatarUrl } = req.body;
+  const { name, title, avatarUrl, studentClass, phone, rollNumber } = req.body;
   const user = await User.findById(req.user._id);
   if (!user) return res.status(404).json({ success: false, message: 'Not found' });
 
@@ -23,6 +23,7 @@ exports.updateMe = async (req, res) => {
     user.name = name;
     user.initials = name
       .split(' ')
+      .filter(Boolean)
       .map((n) => n[0])
       .join('')
       .toUpperCase()
@@ -30,7 +31,33 @@ exports.updateMe = async (req, res) => {
   }
   if (title !== undefined) user.title = title;
   if (avatarUrl !== undefined) user.avatarUrl = avatarUrl;
+  if (studentClass !== undefined) user.studentClass = studentClass;
+  if (phone !== undefined) user.phone = phone;
+  if (rollNumber !== undefined) user.rollNumber = rollNumber;
 
   await user.save();
   res.json({ success: true, data: user });
+};
+
+// PUT /api/users/password – Change password
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Current and new password are required' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+  }
+
+  const user = await User.findById(req.user._id);
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch) {
+    return res.status(400).json({ success: false, message: 'Incorrect current password' });
+  }
+
+  user.password = newPassword;
+  await user.save();
+  res.json({ success: true, message: 'Password updated successfully' });
 };

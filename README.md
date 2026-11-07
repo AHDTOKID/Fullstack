@@ -1,6 +1,6 @@
 # Academic Atelier – Academic Record Management Portal
 
-A full-stack web application built with **React** (frontend) and **Node.js/Express** (backend), using **MongoDB** for data persistence. Faithfully reproduces the "Curated Authority" design system from the original HTML prototype.
+A full-stack web application built with **React** (frontend) and **Node.js/Express** (backend), using **MongoDB** for data persistence. Faithfully reproduces the "Curated Authority" design system from the original prototype.
 
 ---
 
@@ -8,8 +8,8 @@ A full-stack web application built with **React** (frontend) and **Node.js/Expre
 
 ```
 academic-portal/
-├── backend/          # Node.js + Express REST API
-└── frontend/         # React app (CRA + Tailwind CSS)
+├── backend/          # Node.js + Express REST API (Mongoose, JWT, Auth)
+└── frontend/         # React application (Tailwind CSS, React Router, Context API)
 ```
 
 ---
@@ -17,8 +17,20 @@ academic-portal/
 ## Prerequisites
 
 - Node.js v18+
-- MongoDB (local install or a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster)
+- MongoDB (local install e.g. Homebrew `mongodb-community` or MongoDB Atlas)
 - npm or yarn
+
+---
+
+## Quick Demo Credentials (1-Click Login Available)
+
+| Role | Name | Email | Password | Assigned Class | Initial Due |
+|------|------|-------|----------|----------------|-------------|
+| Student | Alex Thompson | `alex@school.edu` | `password123` | Grade 10 - Section A | ₹0 (Paid) |
+| Student | Priya Nair | `priya@school.edu` | `password123` | Grade 10 - Section B | ₹15,000 (Pending) |
+| Student | Sasha Petrov | `sasha@school.edu` | `password123` | Grade 11 - Section A | ₹0 (Paid) |
+| Faculty | Dr. Julian Thorne | `faculty@school.edu` | `password123` | Faculty Lead | N/A |
+| Admin | Eleanor Vance | `admin@school.edu` | `password123` | Dean of Affairs | N/A |
 
 ---
 
@@ -28,30 +40,36 @@ academic-portal/
 cd backend
 npm install
 
-# Copy and configure environment variables
-cp .env.example .env
-# Edit .env:
-#   MONGODB_URI=mongodb://localhost:27017/academic_portal
-#   JWT_SECRET=change_this_to_a_long_random_string
-#   PORT=5000
-
-npm run dev     # development (nodemon)
+# Start server (auto-seeds database with initial users, distinct timetables, classes & fees)
+npm run dev     # development (port 5001)
 # or
 npm start       # production
+
+# Run automated system tests
+npm test
 ```
 
-The API will be available at `http://localhost:5000`.
+The API runs on `http://localhost:5001`.
 
 ### API Endpoints
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | /api/auth/register | — | Register new user |
+| POST | /api/auth/register | — | Register new user with role & assigned class |
 | POST | /api/auth/login | — | Login, returns JWT |
-| GET | /api/auth/me | ✓ | Get current user |
+| GET | /api/auth/me | ✓ | Get current user profile |
 | GET | /api/users | ✓ | List all users |
 | GET | /api/users/:id | ✓ | Get single user |
 | PUT | /api/users/me | ✓ | Update own profile |
+| GET | /api/timetable | ✓ | Get personalized timetable (or by ?className=...&term=...) |
+| GET | /api/timetable/classes | ✓ | Get available classes and terms |
+| PUT | /api/timetable | ✓ | Update class timetable (Faculty/Admin only) |
+| GET | /api/fees | ✓ | List fees (student view: own dues; admin view: all records) |
+| POST | /api/fees | ✓ | Add new fee record (Faculty/Admin) |
+| POST | /api/fees/:id/pay | ✓ | **Process payment** (Card, UPI, Netbanking) & issue receipt |
+| GET | /api/fees/:id/receipt/:txnId | ✓ | Get official printable receipt / invoice |
+| GET | /api/classes | ✓ | List classes and active student rosters |
+| POST | /api/classes | ✓ | Create a new class |
 | GET | /api/feedback | ✓ | Get received feedback (paginated) |
 | GET | /api/feedback/given | ✓ | Get given feedback (paginated) |
 | GET | /api/feedback/drafts | ✓ | Get draft feedback |
@@ -66,40 +84,35 @@ The API will be available at `http://localhost:5000`.
 ```bash
 cd frontend
 npm install
-npm start     # Runs on http://localhost:3000
+npm start     # Runs on http://localhost:3000 (proxies to http://localhost:5001)
 ```
-
-The CRA proxy (`"proxy": "http://localhost:5000"` in package.json) forwards all `/api` calls to the backend — no CORS configuration needed in development.
 
 ### Build for Production
 
 ```bash
 npm run build
 # Output goes to frontend/build/
-# Serve with: npx serve -s build
 ```
 
 ---
 
-## Features
+## Core Features & Fixes
 
-- **Authentication** – JWT-based register / login / persistent sessions
-- **Feedback Portal** – Create, view, and manage feedback with star ratings
-- **Tab Navigation** – Switch between Received / Given / Drafts
-- **Pagination** – Server-side pagination for feedback lists
-- **Responsive Design** – Full mobile support with bottom navigation bar
-- **Design System** – Glassmorphism, gradient CTAs, asymmetric card layout, no-border tonal layering
-- **Form Validation** – Client + server-side with friendly error messages
+1. **Per-Student & Per-Class Distinct Timetables**:
+   - Fixed the issue where all students saw the identical timetable.
+   - Each class (Grade 10-A, Grade 10-B, Grade 11-A, Grade 11-B, Grade 12-A) now has its own unique, realistic curriculum, subjects, teachers, and period allocations.
+   - Students automatically receive their class's personalized schedule with room numbers, period highlights, and student badges.
+   - Faculty and Admins can switch between any class schedule and edit cells inline with persistent database updates.
 
----
+2. **Integrated Fee Payment System**:
+   - Full online payment gateway flow integrated into the Fee Management page.
+   - Supports **Credit/Debit Cards** (with real-time card brand detection & formatting), **UPI & Dynamic QR Code Scanner**, and **Net Banking** with instant bank redirection simulation.
+   - Flexible full or partial payment options.
+   - Instant transaction confirmation, automatic outstanding balance deduction, and status updates (Pending -> Partial -> Paid).
+   - Generates official downloadable & printable fee receipts/invoices featuring institute seal, itemized breakdown, and digital signatures.
 
-## Design System Tokens (Tailwind)
-
-Key colours used throughout:
-- `primary` — `#002045` (deep navy anchor)
-- `primary-container` — `#1a365d`
-- `secondary` — `#505f76` (slate grey)
-- `surface` / `surface-container-low` — light blue-tinted page backgrounds
-- `tertiary-fixed` — `#ffddb8` (warm amber for avatars/accents)
-
-Fonts: **Manrope** (headlines) + **Inter** (body)
+3. **Unified Auth & Architecture**:
+   - Replaced fragmented hooks with a unified React `AuthProvider` / `AuthContext`.
+   - Fixed login/registration redirects directly to `/dashboard`.
+   - Configured port 5001 proxying to avoid macOS AirPlay port 5000 conflicts.
+   - Zero compiler warnings and clean production builds.

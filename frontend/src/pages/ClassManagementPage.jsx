@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import api from '../api/client';
 
 const initialClasses = [
   { id: 'CLS-001', name: 'Grade 10 - Section A', teacher: 'Dr. Julian Thorne', subject: 'Advanced Physics', students: 32, room: 'Lab 3A', schedule: 'Mon/Wed/Fri', status: 'active' },
@@ -21,20 +23,53 @@ const studentsList = [
 const avatarColors = ['bg-blue-100 text-blue-700','bg-pink-100 text-pink-700','bg-gray-100 text-gray-700','bg-green-100 text-green-700','bg-purple-100 text-purple-700','bg-orange-100 text-orange-700'];
 
 export default function ClassManagementPage() {
+  const navigate = useNavigate();
   const [selectedClass, setSelectedClass] = useState(initialClasses[0]);
   const [classes, setClasses] = useState(initialClasses);
+  const [students, setStudents] = useState(studentsList);
   const [view, setView] = useState('classes'); // 'classes' | 'students'
   const [showAddModal, setShowAddModal] = useState(false);
   const [newClass, setNewClass] = useState({ name:'', teacher:'', subject:'', room:'', schedule:'' });
   const [search, setSearch] = useState('');
 
-  const filteredStudents = studentsList.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) || s.id.includes(search)
+  useEffect(() => {
+    api.get('/classes')
+      .then(res => {
+        if (res.data?.success && res.data.data?.length > 0) {
+          setClasses(res.data.data);
+          setSelectedClass(res.data.data[0]);
+        }
+        if (res.data?.students?.length > 0) {
+          setStudents(res.data.students.map((st, i) => ({
+            roll: st.rollNumber || `00${i + 1}`,
+            name: st.name,
+            id: st.studentId || `#ST-99${i + 20}`,
+            email: st.email,
+            gpa: '3.8',
+            attendance: '94%',
+            status: 'active',
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const filteredStudents = students.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase()) || (s.id || '').includes(search)
   );
 
-  const addClass = () => {
+  const addClass = async () => {
     if (!newClass.name) return;
-    setClasses(c => [...c, { ...newClass, id: `CLS-00${c.length+1}`, students: 0, status: 'active' }]);
+    try {
+      const res = await api.post('/classes', newClass);
+      if (res.data?.success) {
+        setClasses(c => [...c, res.data.data]);
+      } else {
+        setClasses(c => [...c, { ...newClass, classId: `CLS-00${c.length+1}`, students: 0, status: 'active' }]);
+      }
+    } catch {
+      setClasses(c => [...c, { ...newClass, classId: `CLS-00${c.length+1}`, students: 0, status: 'active' }]);
+    }
     setShowAddModal(false);
     setNewClass({ name:'', teacher:'', subject:'', room:'', schedule:'' });
   };
@@ -125,7 +160,10 @@ export default function ClassManagementPage() {
                 ))}
               </div>
               <div className="mt-6 space-y-2">
-                <button className="w-full py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all">
+                <button
+                  onClick={() => navigate('/timetable')}
+                  className="w-full py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold text-sm hover:opacity-90 transition-all cursor-pointer shadow-sm"
+                >
                   View Timetable
                 </button>
                 <button className="w-full py-3 bg-surface-container-high text-on-primary-fixed-variant rounded-xl font-semibold text-sm hover:bg-surface-container-highest transition-colors">

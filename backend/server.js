@@ -7,12 +7,17 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const feedbackRoutes = require('./routes/feedback');
 const userRoutes = require('./routes/users');
+const timetableRoutes = require('./routes/timetable');
+const feeRoutes = require('./routes/fees');
+const classRoutes = require('./routes/classes');
+const recordRoutes = require('./routes/records');
+const seedDatabase = require('./seed');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], credentials: true }));
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -20,6 +25,10 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/fees', feeRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/records', recordRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -38,8 +47,9 @@ app.use((err, req, res, next) => {
 // Connect to MongoDB and start server
 console.log('ENV CHECK:', process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log('✅ MongoDB connected');
+    await seedDatabase();
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch((err) => {
